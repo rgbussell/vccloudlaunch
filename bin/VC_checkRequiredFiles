@@ -1,0 +1,39 @@
+#!/bin/bash
+#find all files needed for vc step 2 analysis
+# This code also creates a list of files with their absolute dirs 
+
+sm="$0:"
+echo $sm checking for required files
+
+dataDir=$1
+
+#dataDir=~/data/compliance/mg_study/20180608_MG_003-01
+fileListFn=VC_requiredFiles.txt
+id=`grep "^id " $dataDir/subject_info.txt | awk '{print $2}'`
+dateStr=`grep "^date " $dataDir/subject_info.txt | awk '{print $2}'`
+subDir=$id"_"$dateStr
+filesToTransfer=$dataDir/$subDir/VCFilesToTransfer.txt
+
+grep -v "^$" $fileListFn | sed "s/SUBDIR/$subdir/g" > /tmp/files.$$
+
+allFound=1
+while read line
+do
+  if [ -f $dataDir/$line ];then 
+    echo "$line Found"
+  else 
+    allFound=0
+    echo "$line Not found" 
+  fi
+  echo $line >> /tmp/files2.$$
+done < /tmp/files.$$
+
+if [ $allFound -eq 1 ];then
+  echo All files were found
+  cp /tmp/files2.$$ $filesToTransfer
+else
+  echo Not all files were found
+  rm -f $filesToTransfer 
+fi
+
+rm /tmp/files.$$ /tmp/files?.$$

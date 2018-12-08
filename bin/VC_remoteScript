@@ -1,0 +1,12 @@
+#!/bin/bash
+
+TESTMODE=0
+#server side script for vc processing
+launchDir=~/bin/vc
+
+cd $launchDir
+
+if [ TESTMODE ];then
+  ./testPythonPath.bash
+  ./testISMRM.bash
+fi

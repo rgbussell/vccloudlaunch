@@ -1,0 +1,17 @@
+picore250brik+dbl.nii.gz
+picore350brik+dbl.nii.gz
+picore450brik+dbl.nii.gz
+picore550brik+dbl.nii.gz
+picore650brik+dbl.nii.gz
+picore750brik+dbl.nii.gz
+picore850brik+dbl.nii.gz
+
+SUBDIR/subject_info.txt
+
+SUBDIR/PhysMon/PhysPars_003_TI250_pOxPhase.png 
+SUBDIR/PhysMon/PhysPars_003_TI350_pOxPhase.png 
+SUBDIR/PhysMon/PhysPars_003_TI450_pOxPhase.png 
+SUBDIR/PhysMon/PhysPars_003_TI550_pOxPhase.png 
+SUBDIR/PhysMon/PhysPars_003_TI650_pOxPhase.png 
+SUBDIR/PhysMon/PhysPars_003_TI750_pOxPhase.png 
+SUBDIR/PhysMon/PhysPars_003_TI850_pOxPhase.png 
