@@ -1,2 +1,8 @@
 *~
 *.swp
+data/*
+*.nii.gz
+*.npy
+*.BRIK
+*.HEAD
+*.nii

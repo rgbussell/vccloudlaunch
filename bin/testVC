@@ -8,14 +8,14 @@
 # testcloud: run unit tests in cloud and stop
 # testrun (or no mode given): run the analysis with standard data set
 
-dataDir=~/data/compliance/kb_study/180707_PupAlz/PupAlz_119
+dataDir=~/data/testdata/subname/119_180612
 userid=rbussell
-
+sm=$0:
 #set the testing mode for this run
 #implement changes to the VC_cloudRun script later !!!
 mode=runcloud
 if [ "$#" -gt "0" ]; then
-  mode=$1
+  mod=$1
   inArgs="$userid $dataDir $mode"
 else
   inArgs="$userid $dataDir"
@@ -26,5 +26,6 @@ echo $mode | grep -q runcloud && scriptName=VC_cloudRun
 
 #Run the script
 cmd="$scriptName $inArgs"
-echo testVC running: $scriptName $inArgs
+echo $sm command is on next line
+echo $cmd
 $cmd

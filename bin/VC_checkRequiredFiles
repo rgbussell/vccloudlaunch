@@ -2,38 +2,42 @@
 #find all files needed for vc step 2 analysis
 # This code also creates a list of files with their absolute dirs 
 
-sm="$0:"
+sm="`basename $0`:"
 echo $sm checking for required files
 
 dataDir=$1
 
+echo $sm has dataDir $dataDir
+
+subjectInfoFile=$dataDir"/subject_info.txt"
+if [ ! -f $subjectInfoFile ]; then
+  echo $sm subject info file, $subjectInfoFile, Not found
+  echo $sm could not find files $subjectInfoFile
+  exit
+fi
+
+#echo $subjectInfoFile has
+#cat $subjectInfoFile
+
 #dataDir=~/data/compliance/mg_study/20180608_MG_003-01
 fileListFn=VC_requiredFiles.txt
-id=`grep "^id " $dataDir/subject_info.txt | awk '{print $2}'`
-dateStr=`grep "^date " $dataDir/subject_info.txt | awk '{print $2}'`
-subDir=$id"_"$dateStr
-filesToTransfer=$dataDir/$subDir/VCFilesToTransfer.txt
 
-grep -v "^$" $fileListFn | sed "s/SUBDIR/$subdir/g" > /tmp/files.$$
+id=`grep "^id " $subjectInfoFile | awk '{print $2}'`
+dateStr=`grep "^date " $subjectInfoFile | awk '{print $2}'`
+#subDir=$id"_"$dateStr
+filesToTransfer=$dataDir/VCFilesToTransfer.txt
 
-allFound=1
+grep -v "^$" $fileListFn | grep -v "^#" > /tmp/files.$$
+
 while read line
 do
   if [ -f $dataDir/$line ];then 
     echo "$line Found"
+    echo $line >> /tmp/files2.$$
   else 
-    allFound=0
-    echo "$line Not found" 
+    echo "$dataDir/$line Not found" 
   fi
-  echo $line >> /tmp/files2.$$
 done < /tmp/files.$$
 
-if [ $allFound -eq 1 ];then
-  echo All files were found
-  cp /tmp/files2.$$ $filesToTransfer
-else
-  echo Not all files were found
-  rm -f $filesToTransfer 
-fi
-
+cp /tmp/files2.$$ $filesToTransfer
 rm /tmp/files.$$ /tmp/files?.$$

@@ -1,9 +1,10 @@
 #!/bin/sh
 
 #VC_cloudRun: Start a vc processing job in the cloud
-#example: VC_cloudRun rbussell ~/data/compliance/kb_study/180707_PupAlz/PupAlz_119
+#example: VC_cloudRun rbussell ~/data/compliance/kb_study/180707_PupAlz/PupAlz_119/119_180612 
+# NB: specify the data directory all the way to the id_dir
 
-sptMsg="$0:"
+sptMsg="`basename $0`:"
 
 throwInputArgError() {
   echo ERROR: Bad or not enough input arguments. EXITING
@@ -12,31 +13,30 @@ throwInputArgError() {
 }
 
 checkInputArgs() {
-  if [ $# -lt 2 ]; then
-    throwInputArgError()
-    exit
-  else
-    userid=$1
-    localRawDir=$2
-    if [ "$#" -gt 2 ];then
-      mode=$3
-    fi
+if [ $# -lt 2 ]; then
+  throwInputArgError()
+  exit
+else
+  userid=$1
+  localRawDir=$2
+  if [ "$#" -gt 2 ];then
+    mode=$3
   fi
+fi
 echo userid is $userid
 echo datadir is $localRawDir
 }
-
 #Set default mode and check for input mode
 #Only runcloud implemented for now.
 #Add test later
 mode=runcloud
-remoteTgtDir="~/data/vcprocRemote/"
+remoteProcDir="~/data/vcprocRemote/"
 remoteScript="./VC_remoteScript"
 procScript="~/bin/vc/VC_runProc.bash"
 
-cfmribob="52.53.94.192"
+serverHostname="52.53.94.192"
 descriptorFn=../descriptors/instanceIDs
-remoteHost=$cfmribob
+remoteHost=$serverHostname
 
 checkIntervalSec=2
 nChecks=90
@@ -103,8 +103,10 @@ waitForNetwork() {
   done
 
   #do one last check on network
-  checkRemoteSSH | grep -q down && echo ERROR! Network check timed out without success.; exit
-  checkRemoteSSH | grep -q up && echo returning from network check. Network is up
+  tmp="$(checkRemoteSSH)"
+  echo checkRemoteSSH returns `checkRemoteSSH`
+  echo $checkRemoteSSH | grep -q down && echo ERROR! Network check timed out without success.; exit
+  echo $checkRemoteSSH | grep -q up && echo returning from network check. Network is up
 }
 
 waitForInstanceToStart() {
@@ -193,25 +195,24 @@ echo -----------------------------------------------------------
 echo;echo
 }
 
-getSubDir() {
-  id=`grep "^id " $localRawDir"/subject_info.txt" | awk '{print $2}'`
-  dateStr=`grep "^date " $localRawDir"/subject_info.txt" | awk '{print $2}'`
-  subDir=$id"_"$dateStr
-  echo $subDir
-}
+#getSubDir() {
+  #echo $sptMsg looking for subject_info.txt in $localRawDir
+#  id=`grep "^id " $localRawDir"/subject_info.txt" | awk '{print $2}'`
+#  dateStr=`grep "^date " $localRawDir"/subject_info.txt" | awk '{print $2}'`
+#  id_dir=$id"_"$dateStr
+#}
 
 transferData() {
-subDir=`getSubDir`
-echo $localRawDir/$subDir/VCFilesToTransfer.txt
-remoteProcDir=$remoteTgtDir/`basename $localRawDir`_vccloud
-rsyncCmd="rsync -avxP --files-from=$localRawDir/$subDir/VCFilesToTransfer.txt $localRawDir $userid@$remoteHost:$remoteProcDir"
+echo $sptMsg transfer files files is $localRawDir/VCFilesToTransfer.txt
+remoteProcDir=$remoteProcDir/`basename $localRawDir`_vccloud
+rsyncCmd="rsync -avxP --files-from=$localRawDir/VCFilesToTransfer.txt $localRawDir $userid@$remoteHost:$remoteProcDir"
 echo $rsyncCmd
 $rsyncCmd
 }
 
 checkRemoteSSH() {
 sshState=$DOWN
-nc -zv $cfmribob 22 2>&1 | grep -q succeeded && sshState=$UP 
+nc -zv $serverHostname 22 2>&1 | grep -q succeeded && sshState=$UP 
 if [ $sshState -eq $UP ]
 then
   echo port 22 is up
@@ -222,28 +223,64 @@ then
 fi
 }
 
-startRemote() {
-echo startRemote called
-#ssh -X $userid@$remoteHost 'bash -s' < $remoteScript
-M0=1;pp=1
-launchCmd="/home/rbussell/bin/vc/VC_runProc.bash $remoteProcDir `basename $subDir` $subDir $M0 $pp remoteproc"
-echo "#!/bin/bash" > /tmp/launchSpt
-echo "$launchCmd" >> /tmp/launchSpt
-
-#ssh -X $userid@$remoteHost "echo $launchCmd > $remoteProcDir/launchCmd; /bin/bash ./launchCmd"
-#ssh -X $userid@$remoteHost 'cd $remoteProcDir; /bin/bash -s' < /tmp/launchSpt
-ssh -X $userid@$remoteHost "cd $remoteProcDir; $launchCmd"
+readM0() {
+  M0=`awk '{print}' $localRawDir/reg/M0_blood.txt`
 }
+
+readPP() {
+  pp=`grep ^pp $subjectInfoFile | awk '{print $2}'`
+}
+
+makeLaunchScript() {
+  readM0
+  readPP
+  echo localRawDir is $localRawDir
+  echo remoteProcDir is $remoteProcDir
+  echo M0 is $M0
+  echo pp is $pp
+  launchCmd=/home/rbussell/bin/vc/VC_runProc.bash
+  launchCmd="$launchCmd $remoteProcDir $localRawDir $M0 $pp remoteproc"
+  echo launchCmd is $launchCmd
+  echo "#!/bin/bash" > /tmp/launchSpt
+  echo cd $remoteProcDir
+  echo "$launchCmd" >> /tmp/launchSpt
+}
+
+startRemote() {
+  echo startRemote called
+  makeLaunchScript
+  echo -------------
+  echo $sptMsg generated this script for ssh call
+  more /tmp/launchSpt
+  echo -------------
+  #ssh -X $userid@$remoteHost "echo $launchCmd > $remoteProcDir/launchCmd; /bin/bash ./launchCmd"
+  #ssh -X $userid@$remoteHost 'cd $remoteProcDir; /bin/bash -s' < /tmp/launchSpt
+  ssh -X $userid@$remoteHost "$launchCmd"
+}
+
 
 checkRequiredFiles() {
-  `VC_checkRequiredFiles | grep -q "Not Found"` && echo ERROR: Some files not found. EXITING.;VC_checkRequiredFiles;exit
+  onFail() {
+    echo $sm ERROR: 
+    echo ====================  ERROR  ========================= 
+    echo !!!! Some required input files not found!!!!
+    VC_checkRequiredFiles $localRawDir
+    echo ===================  EXITING  ======================== 
+    exit
+  }
+  tmp="$(VC_checkRequiredFiles $localRawDir)"
+  echo $tmp | grep -q "Not found" && onFail
 }
 #--------MAIN---------
+#getSubDir
+
 checkInputArgs "$@"
+echo $sptMsg localRawDir is $localRawDir
+subjectInfoFile=$localRawDir"/subject_info.txt"
+echo $sm will look for subject info in file $subjectInfoFile
+checkRequiredFiles $localRawDir
 
-VC_checkRequiredFiles $localRawDir
-
-sayHello
+#sayHello
 
 readInstanceDescriptor
 
@@ -251,8 +288,8 @@ openSession
 
 transferData
 
-startRemote
+#makeLaunchScript
 
-#closeSession
+#startRemote
 
 cleanupAndExit

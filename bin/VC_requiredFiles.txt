@@ -1,17 +1,23 @@
-picore250brik+dbl.nii.gz
-picore350brik+dbl.nii.gz
-picore450brik+dbl.nii.gz
-picore550brik+dbl.nii.gz
-picore650brik+dbl.nii.gz
-picore750brik+dbl.nii.gz
-picore850brik+dbl.nii.gz
+#picore data
+reg/mc_TI250_raw.nii.gz
+reg/mc_TI350_raw.nii.gz
+reg/mc_TI450_raw.nii.gz
+reg/mc_TI550_raw.nii.gz
+reg/mc_TI650_raw.nii.gz
+reg/mc_TI750_raw.nii.gz
+reg/mc_TI850_raw.nii.gz
 
-SUBDIR/subject_info.txt
+#subject information
+subject_info.txt
 
-SUBDIR/PhysMon/PhysPars_003_TI250_pOxPhase.png 
-SUBDIR/PhysMon/PhysPars_003_TI350_pOxPhase.png 
-SUBDIR/PhysMon/PhysPars_003_TI450_pOxPhase.png 
-SUBDIR/PhysMon/PhysPars_003_TI550_pOxPhase.png 
-SUBDIR/PhysMon/PhysPars_003_TI650_pOxPhase.png 
-SUBDIR/PhysMon/PhysPars_003_TI750_pOxPhase.png 
-SUBDIR/PhysMon/PhysPars_003_TI850_pOxPhase.png 
+#phase assignments
+PhysMon/PhysPars_TI250_pOxPhase.dat 
+PhysMon/PhysPars_TI350_pOxPhase.dat 
+PhysMon/PhysPars_TI450_pOxPhase.dat 
+PhysMon/PhysPars_TI550_pOxPhase.dat 
+PhysMon/PhysPars_TI650_pOxPhase.dat 
+PhysMon/PhysPars_TI750_pOxPhase.dat 
+PhysMon/PhysPars_TI850_pOxPhase.dat
+
+#mask
+brain_mask.nii.gz
