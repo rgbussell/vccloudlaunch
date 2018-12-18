@@ -31,7 +31,6 @@ echo datadir is $localRawDir
 #Add test later
 mode=runcloud
 remoteProcDir="~/data/vcprocRemote/"
-remoteScript="./VC_remoteScript"
 procScript="~/bin/vc/VC_runProc.bash"
 
 serverHostname="52.53.94.192"
@@ -92,7 +91,7 @@ waitForNetwork() {
   drawBar $nChecks;echo
   while [ "$cnt" -lt "$nChecks" ];do
     echo -n .
-    if checkRemoteSSH | grep -q down; then
+    if echo $(checkRemoteSSH) | grep -q down; then
       netSstate=down
       sleep $checkIntervalSec
     else
@@ -195,6 +194,13 @@ echo -----------------------------------------------------------
 echo;echo
 }
 
+getIdDir() {
+  #echo $sptMsg looking for subject_info.txt in $localRawDir
+  id=`grep "^id " $localRawDir"/subject_info.txt" | awk '{print $2}'`
+  dateStr=`grep "^date " $localRawDir"/subject_info.txt" | awk '{print $2}'`
+  id_dir=$id"_"$dateStr
+}
+
 #getSubDir() {
   #echo $sptMsg looking for subject_info.txt in $localRawDir
 #  id=`grep "^id " $localRawDir"/subject_info.txt" | awk '{print $2}'`
@@ -205,6 +211,9 @@ echo;echo
 transferData() {
 echo $sptMsg transfer files files is $localRawDir/VCFilesToTransfer.txt
 remoteProcDir=$remoteProcDir/`basename $localRawDir`_vccloud
+echo -------------will rsync these files--------------
+more $localRawDir/VCFilesToTransfer.txt
+echo -------------------------------------------------
 rsyncCmd="rsync -avxP --files-from=$localRawDir/VCFilesToTransfer.txt $localRawDir $userid@$remoteHost:$remoteProcDir"
 echo $rsyncCmd
 $rsyncCmd
@@ -212,23 +221,39 @@ $rsyncCmd
 
 checkRemoteSSH() {
 sshState=$DOWN
-nc -zv $serverHostname 22 2>&1 | grep -q succeeded && sshState=$UP 
-if [ $sshState -eq $UP ]
-then
-  echo port 22 is up
-fi
-if [ $sshState -eq $DOWN ]
-then
-  echo port 22 is down
-fi
+nc -zv $serverHostname 22 | grep -q succeeded && sshState=$UP && echo port 22 is up || echo port 22 is down
 }
 
 readM0() {
-  M0=`awk '{print}' $localRawDir/reg/M0_blood.txt`
+  onFail() {
+    echo $sm ERROR: 
+    echo ====================  ERROR  ========================= 
+    echo !!!!    Could not read M0 blood       !!!!
+    echo !!!! Check the file $localRawDir/"$id_dir"/reg/M0_blood.txt !!!!
+    echo ===================  EXITING  ======================== 
+    exit
+  }
+
+  getIdDir
+  M0=`awk '{print}' "$localRawDir"/"$id_dir"/reg/M0_blood.txt`
+  if [ x"$M0" = "x" ];then
+    onFail
+  fi
 }
 
 readPP() {
-  pp=`grep ^pp $subjectInfoFile | awk '{print $2}'`
+  onFail() {
+    echo $sm ERROR: 
+    echo ====================  ERROR  ========================= 
+    echo !!!!    Could not read the pulse pressure, pp     !!!!
+    echo !!!! Check the file $subjectInfoFile  !!!!
+    echo ===================  EXITING  ======================== 
+    exit
+  }
+  pp=`grep "^pp " $subjectInfoFile | awk '{print $2}'`
+  if [ x"$pp" = "x" ];then
+    onFail
+  fi
 }
 
 makeLaunchScript() {
@@ -239,7 +264,7 @@ makeLaunchScript() {
   echo M0 is $M0
   echo pp is $pp
   launchCmd=/home/rbussell/bin/vc/VC_runProc.bash
-  launchCmd="$launchCmd $remoteProcDir $localRawDir $M0 $pp remoteproc"
+  launchCmd="$launchCmd $remoteProcDir $M0 $pp $id_dir remoteproc"
   echo launchCmd is $launchCmd
   echo "#!/bin/bash" > /tmp/launchSpt
   echo cd $remoteProcDir
@@ -269,15 +294,17 @@ checkRequiredFiles() {
     exit
   }
   tmp="$(VC_checkRequiredFiles $localRawDir)"
-  echo $tmp | grep -q "Not found" && onFail
+  echo $tmp | grep -q "NOT FOUND" && onFail
 }
 #--------MAIN---------
-#getSubDir
 
 checkInputArgs "$@"
 echo $sptMsg localRawDir is $localRawDir
 subjectInfoFile=$localRawDir"/subject_info.txt"
 echo $sm will look for subject info in file $subjectInfoFile
+
+VC_renamePoxFiles $localRawDir/PhysMon
+
 checkRequiredFiles $localRawDir
 
 #sayHello
@@ -286,10 +313,12 @@ readInstanceDescriptor
 
 openSession
 
+
 transferData
 
-#makeLaunchScript
 
-#startRemote
+#makeLaunchScript #this is now called in startRemote
+
+startRemote
 
 cleanupAndExit

@@ -7,8 +7,12 @@ echo $sm checking for required files
 
 dataDir=$1
 
+requiredFilesFn=VC_requiredFiles.txt
+filesToTransfer=$dataDir/VCFilesToTransfer.txt
+
 echo $sm has dataDir $dataDir
 
+#creat the id_dir from subject_info.txt
 subjectInfoFile=$dataDir"/subject_info.txt"
 if [ ! -f $subjectInfoFile ]; then
   echo $sm subject info file, $subjectInfoFile, Not found
@@ -16,28 +20,24 @@ if [ ! -f $subjectInfoFile ]; then
   exit
 fi
 
-#echo $subjectInfoFile has
-#cat $subjectInfoFile
-
-#dataDir=~/data/compliance/mg_study/20180608_MG_003-01
-fileListFn=VC_requiredFiles.txt
-
 id=`grep "^id " $subjectInfoFile | awk '{print $2}'`
 dateStr=`grep "^date " $subjectInfoFile | awk '{print $2}'`
-#subDir=$id"_"$dateStr
-filesToTransfer=$dataDir/VCFilesToTransfer.txt
+id_dir=$id"_"$dateStr
 
-grep -v "^$" $fileListFn | grep -v "^#" > /tmp/files.$$
+grep -v "^$" $requiredFilesFn | grep -v "^#" | sed "s/ID_DIR/$id_dir/g" | sed "s/ID/$id/g" > /tmp/files.$$
 
+#create the file list for transfer
 while read line
 do
   if [ -f $dataDir/$line ];then 
     echo "$line Found"
     echo $line >> /tmp/files2.$$
   else 
-    echo "$dataDir/$line Not found" 
+    echo "ERROR: FILE NOT FOUND: $dataDir/$line" 
   fi
 done < /tmp/files.$$
+
+more /tmp/files2.$$
 
 cp /tmp/files2.$$ $filesToTransfer
 rm /tmp/files.$$ /tmp/files?.$$

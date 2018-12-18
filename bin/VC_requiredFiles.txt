@@ -1,23 +1,26 @@
 #picore data
-reg/mc_TI250_raw.nii.gz
-reg/mc_TI350_raw.nii.gz
-reg/mc_TI450_raw.nii.gz
-reg/mc_TI550_raw.nii.gz
-reg/mc_TI650_raw.nii.gz
-reg/mc_TI750_raw.nii.gz
-reg/mc_TI850_raw.nii.gz
+ID_DIR/reg/mc_TI250_raw.nii.gz
+ID_DIR/reg/mc_TI350_raw.nii.gz
+ID_DIR/reg/mc_TI450_raw.nii.gz
+ID_DIR/reg/mc_TI550_raw.nii.gz
+ID_DIR/reg/mc_TI650_raw.nii.gz
+ID_DIR/reg/mc_TI750_raw.nii.gz
+ID_DIR/reg/mc_TI850_raw.nii.gz
 
 #subject information
 subject_info.txt
 
+#M0
+ID_DIR/reg/M0_blood.txt
+
 #phase assignments
-PhysMon/PhysPars_TI250_pOxPhase.dat 
-PhysMon/PhysPars_TI350_pOxPhase.dat 
-PhysMon/PhysPars_TI450_pOxPhase.dat 
-PhysMon/PhysPars_TI550_pOxPhase.dat 
-PhysMon/PhysPars_TI650_pOxPhase.dat 
-PhysMon/PhysPars_TI750_pOxPhase.dat 
-PhysMon/PhysPars_TI850_pOxPhase.dat
+PhysMon/PhysPars_TI250_pOxPhaseAtSlice.dat 
+PhysMon/PhysPars_TI350_pOxPhaseAtSlice.dat 
+PhysMon/PhysPars_TI450_pOxPhaseAtSlice.dat 
+PhysMon/PhysPars_TI550_pOxPhaseAtSlice.dat 
+PhysMon/PhysPars_TI650_pOxPhaseAtSlice.dat 
+PhysMon/PhysPars_TI750_pOxPhaseAtSlice.dat 
+PhysMon/PhysPars_TI850_pOxPhaseAtSlice.dat
 
 #mask
-brain_mask.nii.gz
+ID_DIR/reg/vti_mask.nii.gz
