@@ -23,4 +23,5 @@ PhysMon/PhysPars_TI750_pOxPhaseAtSlice.dat
 PhysMon/PhysPars_TI850_pOxPhaseAtSlice.dat
 
 #mask
-ID_DIR/reg/vti_mask.nii.gz
+#ID_DIR/reg/vti_mask.nii.gz
+ID_DIR/reg/mc_TIall_thr.nii.gz

@@ -5,17 +5,25 @@
 # NB: specify the data directory all the way to the id_dir
 
 sptMsg="`basename $0`:"
+installDir=`dirname $0`
+nReqInputArgs=2
 
-throwInputArgError() {
-  echo ERROR: Bad or not enough input arguments. EXITING
-  echo Try it like this: VC_cloudRun youruserid ~/your/study/directory
+throwInputArgErrorThenExit() {
+  giveHelp
+  echo ERROR: $sptMsg Check input arguments. EXITING
   exit
 }
 
+giveHelp() {
+  echo VC_cloudRun run the vascular compliance analysis on remote server
+  echo VC_cloudRun requires $nReqInputArgs input arguments
+  echo example: VC_cloudRun username datadir
+}
+
 checkInputArgs() {
-if [ $# -lt 2 ]; then
-  throwInputArgError()
-  exit
+if [ $# -ne $nReqInputArgs ]; then
+    giveHelp
+    throwInputArgErrorThenExit
 else
   userid=$1
   localRawDir=$2
@@ -34,7 +42,7 @@ remoteProcDir="~/data/vcprocRemote/"
 procScript="~/bin/vc/VC_runProc.bash"
 
 serverHostname="52.53.94.192"
-descriptorFn=../descriptors/instanceIDs
+descriptorFn=$installDir/descriptors/instanceIDs
 remoteHost=$serverHostname
 
 checkIntervalSec=2
@@ -220,8 +228,9 @@ $rsyncCmd
 }
 
 checkRemoteSSH() {
-sshState=$DOWN
-nc -zv $serverHostname 22 | grep -q succeeded && sshState=$UP && echo port 22 is up || echo port 22 is down
+  sshState=$DOWN
+  nc -zv $serverHostname 22 2>/dev/null | grep -q "succeeded" && sshState=$UP 
+  test $sshState -eq $UP && echo port 22 is up || echo port 22 is down
 }
 
 readM0() {
@@ -303,7 +312,7 @@ echo $sptMsg localRawDir is $localRawDir
 subjectInfoFile=$localRawDir"/subject_info.txt"
 echo $sm will look for subject info in file $subjectInfoFile
 
-VC_renamePoxFiles $localRawDir/PhysMon
+#VC_renamePoxFiles $localRawDir/PhysMon
 
 checkRequiredFiles $localRawDir
 

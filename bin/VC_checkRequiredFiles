@@ -3,11 +3,13 @@
 # This code also creates a list of files with their absolute dirs 
 
 sm="`basename $0`:"
+installDir=`dirname $0`
 echo $sm checking for required files
 
 dataDir=$1
 
-requiredFilesFn=VC_requiredFiles.txt
+#requiredFilesFn=$VC_REQUIRED_FILES_TXT
+requiredFilesFn=$installDir/VC_requiredFiles.txt
 filesToTransfer=$dataDir/VCFilesToTransfer.txt
 
 echo $sm has dataDir $dataDir
