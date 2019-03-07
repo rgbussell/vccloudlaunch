@@ -1,7 +1,0 @@
-#!/bin/sh
-
-dataDir=~/data/compliance/kb_study/180707_PupAlz/PupAlz_119
-userid=rbussell
-
-#ls $dataDir
-VC_runInCloud $userid $dataDir

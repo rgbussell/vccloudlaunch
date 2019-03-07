@@ -4,6 +4,8 @@
 #example: VC_cloudRun rbussell ~/data/compliance/kb_study/180707_PupAlz/PupAlz_119/119_180612 
 # NB: specify the data directory all the way to the id_dir
 
+VC_REMOTE_PATH=/apps/vc/bin/
+
 sptMsg="`basename $0`:"
 installDir=`dirname $0`
 nReqInputArgs=2
@@ -11,7 +13,7 @@ nReqInputArgs=2
 throwInputArgErrorThenExit() {
   giveHelp
   echo ERROR: $sptMsg Check input arguments. EXITING
-  exit
+  cleanupAndExit
 }
 
 giveHelp() {
@@ -38,9 +40,10 @@ echo datadir is $localRawDir
 #Only runcloud implemented for now.
 #Add test later
 mode=runcloud
-remoteProcDir="~/data/vcprocRemote/"
-procScript="~/bin/vc/VC_runProc.bash"
-
+#remoteProcDir="/home/${userid}/data/vcprocRemote/"
+#echo userid $userid
+#echo $remoteProcDir
+#exit
 serverHostname="52.53.94.192"
 descriptorFn=$installDir/descriptors/instanceIDs
 remoteHost=$serverHostname
@@ -66,21 +69,21 @@ echo found instance instanceID $instanceID in region $region
 }
 
 printInstanceStatus() {
-aws ec2 describe-instances --instance-ids $instanceID --region $region --output text > /tmp/stat.$$
+aws ec2 describe-instances --instance-ids $instanceID --region $region --output text > ./stat.$$
 }
 
 getInstanceState() {
 printInstanceStatus
 state=$UNKNOWN
-grep STATE /tmp/stat.$$ | grep -q running  && state=$RUNNING
-grep STATE /tmp/stat.$$ | grep -q stopped  && state=$STOPPED
-grep STATE /tmp/stat.$$ | grep -q stopping && state=$STOPPING
-grep STATE /tmp/stat.$$ | grep -q pending  && state=$PENDING
+grep STATE ./stat.$$ | grep -q running  && state=$RUNNING
+grep STATE ./stat.$$ | grep -q stopped  && state=$STOPPED
+grep STATE ./stat.$$ | grep -q stopping && state=$STOPPING
+grep STATE ./stat.$$ | grep -q pending  && state=$PENDING
 echo $state
 }
 
 cleanupAndExit() {
-#rm -f /tmp/stat.$$
+rm -f ./stat.$$
 echo $sptMsg exiting
 }
 
@@ -222,7 +225,7 @@ remoteProcDir=$remoteProcDir/`basename $localRawDir`_vccloud
 echo -------------will rsync these files--------------
 more $localRawDir/VCFilesToTransfer.txt
 echo -------------------------------------------------
-rsyncCmd="rsync -avxP --files-from=$localRawDir/VCFilesToTransfer.txt $localRawDir $userid@$remoteHost:$remoteProcDir"
+rsyncCmd="rsync -avxP --files-from={$localRawDir}/VCFilesToTransfer.txt ${localRawDir} ${userid}"@"${remoteHost}:${remoteProcDir}"
 echo $rsyncCmd
 $rsyncCmd
 }
@@ -240,7 +243,7 @@ readM0() {
     echo !!!!    Could not read M0 blood       !!!!
     echo !!!! Check the file $localRawDir/"$id_dir"/reg/M0_blood.txt !!!!
     echo ===================  EXITING  ======================== 
-    exit
+    cleanupAndExit
   }
 
   getIdDir
@@ -257,7 +260,7 @@ readPP() {
     echo !!!!    Could not read the pulse pressure, pp     !!!!
     echo !!!! Check the file $subjectInfoFile  !!!!
     echo ===================  EXITING  ======================== 
-    exit
+    cleanupAndExit
   }
   pp=`grep "^pp " $subjectInfoFile | awk '{print $2}'`
   if [ x"$pp" = "x" ];then
@@ -272,12 +275,12 @@ makeLaunchScript() {
   echo remoteProcDir is $remoteProcDir
   echo M0 is $M0
   echo pp is $pp
-  launchCmd=/home/rbussell/bin/vc/VC_runProc.bash
-  launchCmd="$launchCmd $remoteProcDir $M0 $pp $id_dir remoteproc"
+  launchCmd=${VC_REMOTE_PATH}/VC_runProc.bash
+  launchCmd="${launchCmd} ${remoteProcDir} $M0 $pp ${id_dir} remoteproc"
   echo launchCmd is $launchCmd
-  echo "#!/bin/bash" > /tmp/launchSpt
+  echo "#!/bin/bash" > ./launchSpt
   echo cd $remoteProcDir
-  echo "$launchCmd" >> /tmp/launchSpt
+  echo "$launchCmd" >> ./launchSpt
 }
 
 startRemote() {
@@ -285,10 +288,10 @@ startRemote() {
   makeLaunchScript
   echo -------------
   echo $sptMsg generated this script for ssh call
-  more /tmp/launchSpt
+  more ./launchSpt
   echo -------------
   #ssh -X $userid@$remoteHost "echo $launchCmd > $remoteProcDir/launchCmd; /bin/bash ./launchCmd"
-  #ssh -X $userid@$remoteHost 'cd $remoteProcDir; /bin/bash -s' < /tmp/launchSpt
+  #ssh -X $userid@$remoteHost 'cd $remoteProcDir; /bin/bash -s' < ./launchSpt
   ssh -X $userid@$remoteHost "$launchCmd"
 }
 
@@ -300,7 +303,7 @@ checkRequiredFiles() {
     echo !!!! Some required input files not found!!!!
     VC_checkRequiredFiles $localRawDir
     echo ===================  EXITING  ======================== 
-    exit
+    cleanupAndExit 
   }
   tmp="$(VC_checkRequiredFiles $localRawDir)"
   echo $tmp | grep -q "NOT FOUND" && onFail
@@ -308,6 +311,7 @@ checkRequiredFiles() {
 #--------MAIN---------
 
 checkInputArgs "$@"
+remoteProcDir="/home/${userid}/data/vcprocRemote/"
 echo $sptMsg localRawDir is $localRawDir
 subjectInfoFile=$localRawDir"/subject_info.txt"
 echo $sm will look for subject info in file $subjectInfoFile
