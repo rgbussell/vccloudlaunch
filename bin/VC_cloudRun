@@ -85,6 +85,7 @@ echo $state
 cleanupAndExit() {
 rm -f ./stat.$$
 echo $sptMsg exiting
+exit
 }
 
 startInstance() {
